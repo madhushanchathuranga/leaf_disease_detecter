@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Maize Disease Classification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Upload an Image for Classification</h1>
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if image_path %}
+        <h2>Prediction: {{ predicted_class }} ({{ '%.2f'|format(confidence * 100) }}% confidence)</h2>
+        <img src="{{ image_path }}" alt="Uploaded Image" width="300">
+    {% endif %}
+</body>
+</html>
