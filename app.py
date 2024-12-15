@@ -1,50 +1,51 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, flash
+from werkzeug.utils import secure_filename
+import os
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
-import os
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
 
 # Load the model
-model_path = 'model/efficientnet_model.h5'
-model = load_model(model_path)
+model = load_model('model\densenet121_corn_leaf_disease.h5')
+class_names = ['Blight', 'Common Rust', 'Gray Leaf Spot', 'Healthy']
 
-# Class labels
-class_labels = ['Healthy', 'Leaf Spot', 'Rust', 'Puccinia sorghi']
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def predict_image(img_path):
+def preprocess_image(img_path):
     img = image.load_img(img_path, target_size=(224, 224))
-    img_array = image.img_to_array(img)
+    img_array = image.img_to_array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
-    img_array /= 255.0
-
-    predictions = model.predict(img_array)
-    predicted_class = class_labels[np.argmax(predictions)]
-    confidence = np.max(predictions)
-
-    return predicted_class, confidence
+    return img_array
 
 @app.route('/', methods=['GET', 'POST'])
-def index():
+def upload_file():
     if request.method == 'POST':
-        # Handle the uploaded file
         if 'file' not in request.files:
+            flash('No file part')
             return redirect(request.url)
-        
         file = request.files['file']
         if file.filename == '':
+            flash('No selected file')
             return redirect(request.url)
-
-        if file:
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-            file.save(file_path)
-            predicted_class, confidence = predict_image(file_path)
-
-            return render_template('index.html', image_path=file_path, predicted_class=predicted_class, confidence=confidence)
-
-    return render_template('index.html')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            img = preprocess_image(filepath)
+            predictions = model.predict(img)
+            predicted_class = class_names[np.argmax(predictions)]
+            confidence = round(np.max(predictions) * 100, 2)
+            return render_template('result.html', 
+                                   prediction=predicted_class, 
+                                   confidence=confidence, 
+                                   image_url=url_for('static', filename='uploads/' + filename))
+    return render_template('uploads.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
