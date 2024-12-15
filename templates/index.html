@@ -2,19 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Maize Disease Classification</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+    <script>
+        function showPopup() {
+            alert('File uploaded successfully!');
+        }
+    </script>
 </head>
 <body>
-    <h1>Upload an Image for Classification</h1>
-    <form method="post" enctype="multipart/form-data">
+    <h1>Upload a Leaf Image</h1>
+    <form action="/" method="POST" enctype="multipart/form-data" onsubmit="showPopup()">
         <input type="file" name="file" required>
-        <button type="submit">Predict</button>
+        <button type="submit">Upload</button>
     </form>
-
-    {% if image_path %}
-        <h2>Prediction: {{ predicted_class }} ({{ '%.2f'|format(confidence * 100) }}% confidence)</h2>
-        <img src="{{ image_path }}" alt="Uploaded Image" width="300">
-    {% endif %}
 </body>
 </html>
